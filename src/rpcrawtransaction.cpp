@@ -62,6 +62,7 @@ void ScriptPubKeyToJSON(const CScript& scriptPubKey, UniValue& out, bool fInclud
 void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry)
 {
     entry.push_back(Pair("txid", tx.GetHash().GetHex()));
+    entry.push_back(Pair("size", (int)::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION)));
     entry.push_back(Pair("version", tx.nVersion));
     entry.push_back(Pair("locktime", (int64_t)tx.nLockTime));
     UniValue vin(UniValue::VARR);
@@ -133,6 +134,7 @@ UniValue getrawtransaction(const UniValue& params, bool fHelp)
             "{\n"
             "  \"hex\" : \"data\",       (string) The serialized, hex-encoded data for 'txid'\n"
             "  \"txid\" : \"id\",        (string) The transaction id (same as provided)\n"
+            "  \"size\" : n,             (numeric) The transaction size\n"
             "  \"version\" : n,          (numeric) The version\n"
             "  \"locktime\" : ttt,       (numeric) The lock time\n"
             "  \"vin\" : [               (array of json objects)\n"
@@ -336,7 +338,7 @@ UniValue createrawtransaction(const UniValue& params, bool fHelp)
             "     ]\n"
             "2. \"outputs\"             (string, required) a json object with outputs\n"
             "    {\n"
-            "      \"address\": x.xxx   (numeric, required) The key is the bitcoin address, the value is the " + CURRENCY_UNIT + " amount\n"
+            "      \"address\": x.xxx   (numeric or string, required) The key is the bitcoin address, the numeric value (can be string) is the " + CURRENCY_UNIT + " amount\n"
             "      \"data\": \"hex\",     (string, required) The key is \"data\", the value is hex encoded data\n"
             "      ...\n"
             "    }\n"
@@ -351,7 +353,6 @@ UniValue createrawtransaction(const UniValue& params, bool fHelp)
             + HelpExampleRpc("createrawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\", \"{\\\"data\\\":\\\"00010203\\\"}\"")
         );
 
-    LOCK(cs_main);
     RPCTypeCheck(params, boost::assign::list_of(UniValue::VARR)(UniValue::VOBJ)(UniValue::VNUM), true);
     if (params[0].isNull() || params[1].isNull())
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, arguments 1 and 2 must be non-null");
@@ -429,6 +430,7 @@ UniValue decoderawtransaction(const UniValue& params, bool fHelp)
             "\nResult:\n"
             "{\n"
             "  \"txid\" : \"id\",        (string) The transaction id\n"
+            "  \"size\" : n,             (numeric) The transaction size\n"
             "  \"version\" : n,          (numeric) The version\n"
             "  \"locktime\" : ttt,       (numeric) The lock time\n"
             "  \"vin\" : [               (array of json objects)\n"

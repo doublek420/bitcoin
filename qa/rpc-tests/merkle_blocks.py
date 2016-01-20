@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# Copyright (c) 2014 The Bitcoin Core developers
+# Copyright (c) 2014-2015 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,8 +9,6 @@
 
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import *
-import os
-import shutil
 
 class MerkleBlockTest(BitcoinTestFramework):
 
@@ -72,7 +70,7 @@ class MerkleBlockTest(BitcoinTestFramework):
         txid_spent = txin_spent["txid"]
         txid_unspent = txid1 if txin_spent["txid"] != txid1 else txid2
 
-        # We cant find the block from a fully-spent tx
+        # We can't find the block from a fully-spent tx
         assert_raises(JSONRPCException, self.nodes[2].gettxoutproof, [txid_spent])
         # ...but we can if we specify the block
         assert_equal(self.nodes[2].verifytxoutproof(self.nodes[2].gettxoutproof([txid_spent], blockhash)), [txid_spent])

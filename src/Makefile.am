@@ -100,6 +100,7 @@ BITCOIN_CORE_H = \
   compat/sanity.h \
   compressor.h \
   consensus/consensus.h \
+  consensus/merkle.h \
   consensus/params.h \
   consensus/validation.h \
   core_io.h \
@@ -116,13 +117,14 @@ BITCOIN_CORE_H = \
   memusage.h \
   merkleblock.h \
   miner.h \
-  mruset.h \
   net.h \
   netbase.h \
   noui.h \
   policy/fees.h \
   policy/policy.h \
+  policy/rbf.h \
   pow.h \
+  prevector.h \
   primitives/block.h \
   primitives/transaction.h \
   protocol.h \
@@ -163,6 +165,7 @@ BITCOIN_CORE_H = \
   version.h \
   wallet/crypter.h \
   wallet/db.h \
+  wallet/rpcwallet.h \
   wallet/wallet.h \
   wallet/wallet_ismine.h \
   wallet/walletdb.h \
@@ -238,6 +241,7 @@ libbitcoin_wallet_a_SOURCES = \
   wallet/wallet.cpp \
   wallet/wallet_ismine.cpp \
   wallet/walletdb.cpp \
+  policy/rbf.cpp \
   $(BITCOIN_CORE_H)
 
 # crypto primitives library
@@ -268,6 +272,7 @@ libbitcoin_common_a_SOURCES = \
   chainparams.cpp \
   coins.cpp \
   compressor.cpp \
+  consensus/merkle.cpp \
   core_read.cpp \
   core_write.cpp \
   hash.cpp \

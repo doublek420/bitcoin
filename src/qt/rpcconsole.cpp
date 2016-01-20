@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2014 The Bitcoin Core developers
+// Copyright (c) 2011-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -269,7 +269,13 @@ RPCConsole::RPCConsole(const PlatformStyle *platformStyle, QWidget *parent) :
     connect(ui->btnClearTrafficGraph, SIGNAL(clicked()), ui->trafficGraph, SLOT(clear()));
 
     // set library version labels
+
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
     ui->openSSLVersion->setText(SSLeay_version(SSLEAY_VERSION));
+#else
+    ui->openSSLVersion->setText(OpenSSL_version(OPENSSL_VERSION));
+#endif
+
 #ifdef ENABLE_WALLET
     ui->berkeleyDBVersion->setText(DbEnv::version(0, 0, 0));
 #else
@@ -278,7 +284,9 @@ RPCConsole::RPCConsole(const PlatformStyle *platformStyle, QWidget *parent) :
 #endif
     // Register RPC timer interface
     rpcTimerInterface = new QtRPCTimerInterface();
-    RPCRegisterTimerInterface(rpcTimerInterface);
+    // avoid accidentally overwriting an existing, non QTThread
+    // based timer interface
+    RPCSetTimerInterfaceIfUnset(rpcTimerInterface);
 
     startExecutor();
     setTrafficGraphRange(INITIAL_TRAFFIC_GRAPH_MINS);
@@ -293,7 +301,7 @@ RPCConsole::~RPCConsole()
 {
     GUIUtil::saveWindowGeometry("nRPCConsoleWindow", this);
     Q_EMIT stopExecutor();
-    RPCUnregisterTimerInterface(rpcTimerInterface);
+    RPCUnsetTimerInterface(rpcTimerInterface);
     delete rpcTimerInterface;
     delete ui;
 }
@@ -343,8 +351,8 @@ void RPCConsole::setClientModel(ClientModel *model)
         setNumConnections(model->getNumConnections());
         connect(model, SIGNAL(numConnectionsChanged(int)), this, SLOT(setNumConnections(int)));
 
-        setNumBlocks(model->getNumBlocks(), model->getLastBlockDate());
-        connect(model, SIGNAL(numBlocksChanged(int,QDateTime)), this, SLOT(setNumBlocks(int,QDateTime)));
+        setNumBlocks(model->getNumBlocks(), model->getLastBlockDate(), model->getVerificationProgress(NULL));
+        connect(model, SIGNAL(numBlocksChanged(int,QDateTime,double)), this, SLOT(setNumBlocks(int,QDateTime,double)));
 
         updateTrafficStats(model->getTotalBytesRecv(), model->getTotalBytesSent());
         connect(model, SIGNAL(bytesChanged(quint64,quint64)), this, SLOT(updateTrafficStats(quint64, quint64)));
@@ -525,7 +533,7 @@ void RPCConsole::setNumConnections(int count)
     ui->numberOfConnections->setText(connections);
 }
 
-void RPCConsole::setNumBlocks(int count, const QDateTime& blockDate)
+void RPCConsole::setNumBlocks(int count, const QDateTime& blockDate, double nVerificationProgress)
 {
     ui->numberOfBlocks->setText(QString::number(count));
     ui->lastBlockTime->setText(blockDate.toString());
